@@ -128,10 +128,10 @@ bool Manager::attempt_login(const std::vector<Manager>& managers, Manager& logge
     std::cout << "请输入密码: ";
     std::cin >> password;
 
-    std::cout << "【调试】输入用户名: " << username << " | 输入密码: " << password << "\n";  // 调试用
+   
 
     for (const auto& mgr : managers) {
-        std::cout << "【调试】比对用户: " << mgr.get_user_name() << "\n";   // 调试用
+        
 
         if (mgr.get_user_name() == username) {
             Manager temp = mgr;

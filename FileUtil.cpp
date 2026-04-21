@@ -7,6 +7,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <charconv> // 新增：用于高效数字转换
 
 namespace fs = std::filesystem;
 
@@ -75,47 +76,39 @@ bool FileUtil::save_users(std::vector<Student>& students, std::vector<Manager>& 
 }
 
 bool FileUtil::load_users(std::vector<Student>& students, std::vector<Manager>& managers, const std::string& filename) {
-    
-    if (!std::filesystem::exists(filename)) {
-        std::cout << "【警告】在该路径下找不到文件！\n";
-    }
     students.clear(); managers.clear();
-    std::ifstream file(filename);
+    std::ifstream file(filename, std::ios::binary); // 以二进制模式打开，防止系统自动转换换行符
     if (!file.is_open()) return false;
 
     std::string line;
     while (std::getline(file, line)) {
-        // 1. 去除行尾可能存在的 \r (针对 Windows 换行符)
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        
-        // 2. 跳过空行
+        // 1. 清理行尾（同时处理 \n 和 \r）
+        line.erase(line.find_last_not_of("\r\n") + 1);
         if (line.empty()) continue;
 
         auto t = split(line, '|');
-        
-        // 调试打印：如果你运行程序，控制台会显示每行切出了多少个字段
-        // std::cout << "DEBUG: Parsing line, tokens count: " << t.size() << std::endl;
+        if (t.size() < 4) continue;
 
-        if (t.size() >= 4) {
-            try {
-                int type = std::stoi(t[0]);
-                int id = std::stoi(t[1]);
-                std::string name = t[2];
-                std::string pwd = t[3];
+        // 2. 健壮的数字转换（自动跳过 BOM 头或非数字前缀）
+        auto safe_to_int = [](std::string_view sv) {
+            int val = 0;
+            auto first = sv.data();
+            auto last = sv.data() + sv.size();
+            // 跳过任何非数字字符（比如文件开头的 BOM）
+            while (first < last && !std::isdigit(static_cast<unsigned char>(*first))) first++;
+            std::from_chars(first, last, val);
+            return val;
+        };
 
-                if (type == 1) {
-                    students.emplace_back(id, name, pwd);
-                } else if (type == 2) {
-                    managers.emplace_back(id, name, pwd);
-                }
-            } catch (const std::exception& e) {
-                // 如果转换失败（比如有乱码），会在这里捕获
-                std::cerr << "DEBUG: Error parsing line: " << e.what() << std::endl;
-                continue;
-            }
-        }
+        // 3. 提取数据
+        int type = safe_to_int(t[0]);
+        int id   = safe_to_int(t[1]);
+        std::string name = t[2];
+        std::string pwd  = t[3];
+
+        if (type == 1) students.emplace_back(id, name, pwd);
+        else if (type == 2) managers.emplace_back(id, name, pwd);
     }
-    file.close();
     return true;
 }
 

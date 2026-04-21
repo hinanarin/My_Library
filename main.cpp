@@ -7,6 +7,8 @@
 #include"BorrowRecord.h"
 #include"FileUtil.h"
 #include"Manager.h"
+
+
 void show_main_menu();
 
 
@@ -21,6 +23,9 @@ void show_main_menu()
 
 int main()
 {
+    // 强制控制台输出和输入都使用 UTF-8 (代码页 65001)
+    // 强制控制台输入输出使用 UTF-8
+
     std::vector<Book> all_books;
     std::vector<BorrowRecord> borrow_records;
     std::vector<Student> students;
@@ -43,7 +48,7 @@ int main()
             Book(1004, "计算机程序的构造和解释", "Harold Abelson", "978-7-302-11111-1", 2)
         };
     }
-    std::cout << "✅ 数据加载完成！共有 " << all_books.size() << " 本图书。\n\n";
+    std::cout << " 数据加载完成！共有 " << all_books.size() << " 本图书。\n\n";
     
     while (true) {
         show_main_menu();
@@ -74,7 +79,7 @@ int main()
             FileUtil::save_books(all_books);
             FileUtil::save_borrow_records(borrow_records);
             FileUtil::save_users(students, managers);
-            std::cout << "✅ 所有数据已保存，感谢使用，再见！👋\n";
+            std::cout << "所有数据已保存，感谢使用，再见！👋\n";
             return 0;
         default:
             std::cout << "输入错误！请重新输入。\n";
